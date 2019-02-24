@@ -49,6 +49,9 @@ pub type Nonce = u64;
 /// Used for the module template in `./template.rs`
 mod template;
 
+/// Bonded Fungible Token module
+mod BondedFungibleToken;
+
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -77,8 +80,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("sr-bondingcurves"),
-	impl_name: create_runtime_str!("sr-bondingcurves"),
+	spec_name: create_runtime_str!("sr-bonded-token"),
+	impl_name: create_runtime_str!("sr-bonded-token"),
 	authoring_version: 3,
 	spec_version: 3,
 	impl_version: 0,
@@ -175,8 +178,9 @@ impl sudo::Trait for Runtime {
 	type Proposal = Call;
 }
 
-/// Used for the module template in `./template.rs`
-impl template::Trait for Runtime { 
+/// Used for the module bonding_curve in `./bonding-curve.rs`
+impl BondedFungibleToken::Trait for Runtime {
+	type TokenBalance = u128;
 	type Event = Event;
 }
 
@@ -194,8 +198,8 @@ construct_runtime!(
 		Balances: balances,
 		Sudo: sudo,
 		Fees: fees::{Module, Storage, Config<T>, Event<T>},
-		// Used for the module template in `./template.rs`
-		TemplateModule: template::{Module, Call, Storage, Event<T>},
+		// Used for the module bonding_curve in `./bonding-curve.rs`
+		BondedToken: BondedFungibleToken::{Module, Call, Storage, Event<T>},
 	}
 );
 
