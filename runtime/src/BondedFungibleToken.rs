@@ -2,7 +2,7 @@ use rstd::prelude::*;
 use parity_codec::Codec;
 use support::{decl_module, decl_storage, decl_event, ensure, StorageValue, StorageMap, Parameter, dispatch::Result};
 use system::{self, ensure_signed};
-use runtime_primitives::traits::{CheckedSub, CheckedAdd, Member, SimpleArithmetic, As};
+use runtime_primitives::traits::{CheckedSub, CheckedAdd, CheckedMul, CheckedDiv, Member, SimpleArithmetic, As};
 
 /// The module's configuration trait.
 pub trait Trait: system::Trait {
@@ -14,13 +14,22 @@ pub trait Trait: system::Trait {
 /// This module's storage items.
 decl_storage! {
 	trait Store for Module<T: Trait> as BondedFungibleToken {
-		Init get(is_init): bool;
+		// Init get(is_init): bool;
+
+
 		// Total Supply
 		TotalSupply get(total_supply): T::TokenBalance;
 		// Mapping of Accounts to Balances
 		BalanceOf get(balance_of): map T::AccountId => T::TokenBalance;
 		// Mapping of Accounts for `Account` to Allowance
 		Allowance get(allowance): map (T::AccountId, T::AccountId) => T::TokenBalance;
+
+		// Exponent
+		Exponent get(exponent): u128;
+		// Slope Numerator
+		SlopeN get(slope_n): u128;
+		// Slope Denominator
+		SlopeD get(slope_d): u128;
 	}
 }
 
@@ -71,6 +80,22 @@ decl_module! {
 
 			Self::deposit_event(RawEvent::Approval(from.clone(), to.clone(), value));
 			Self::_transfer(from, to, value)
+		}
+
+		pub fn buy(_origin) -> Result {
+			Ok(())
+		}
+
+		pub fn sell(_origin) -> Result {
+			Ok(())
+		}
+
+		/// Test function to create some tokens.
+		pub fn create_tokens(origin, amount: T::TokenBalance) -> Result {
+			let sender = ensure_signed(origin)?;
+
+			Self::_mint(sender, amount)?;
+			Ok(())
 		}
 	}
 }
@@ -157,6 +182,45 @@ impl<T: Trait> Module<T> {
 
 		Self::deposit_event(RawEvent::Transfer(Some(from), None, amount));
 		Ok(())
+	}
+
+	fn _calc_buy_price(tokens: T::TokenBalance) -> ::std::result::Result<u128, &'static str> {
+		let supply = Self::total_supply();
+
+		let new_supply = match supply.checked_add(&tokens) {
+			Some(x) => x,
+			None => return Err("Overflow while calculating buy price."),
+		};
+
+		return Self::_integral(new_supply);
+	}
+
+	fn _calc_sell_price(tokens: T::TokenBalance) -> ::std::result::Result<u128, &'static str> {
+		let supply = Self::total_supply();
+
+		let new_supply = match supply.checked_sub(&tokens) {
+			Some(x) => x,
+			None => return Err("Underflow while calculating sell price."),
+		};
+
+		return Self::_integral(new_supply)
+	}
+
+	fn _integral(to_x: T::TokenBalance) -> ::std::result::Result<u128, &'static str> {
+		let nexp = match Self::exponent().checked_add(1) {
+			Some(x) => x,
+			None => return Err("Overflow when adding one to exponent."),
+		};
+
+		let slope = match Self::slope_n().checked_div(Self::slope_d()) {
+			Some(x) => x,
+			None => return Err("Underflow when attempting division."),
+		};
+
+		match (to_x ** &nexp).checked_mul(slope).unwrap().checked_div(nexp) {
+			Some(x) => return Ok(x),
+			None => return Err("Overflow when calculating integral."),
+		}
 	}
 }
 
