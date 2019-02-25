@@ -50,7 +50,7 @@ pub type Nonce = u64;
 mod template;
 
 /// Bonded Fungible Token module
-mod BondedFungibleToken;
+mod bonded_token;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -179,7 +179,7 @@ impl sudo::Trait for Runtime {
 }
 
 /// Used for the module bonding_curve in `./bonding-curve.rs`
-impl BondedFungibleToken::Trait for Runtime {
+impl bonded_token::Trait for Runtime {
 	type TokenBalance = u128;
 	type Event = Event;
 }
@@ -198,8 +198,7 @@ construct_runtime!(
 		Balances: balances,
 		Sudo: sudo,
 		Fees: fees::{Module, Storage, Config<T>, Event<T>},
-		// Used for the module bonding_curve in `./bonding-curve.rs`
-		BondedToken: BondedFungibleToken::{Module, Call, Storage, Event<T>},
+		BondedToken: bonded_token::{Module, Call, Storage, Event<T>},
 	}
 );
 
