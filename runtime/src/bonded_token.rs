@@ -107,6 +107,8 @@ decl_module! {
 
 			Self::_mint(sender, tokens)?;
 
+			Self::deposit_event(RawEvent::Buy(Some(sender), tokens, cost));
+
 			Ok(())
 		}
 
@@ -131,19 +133,8 @@ decl_module! {
 
 			Self::_burn(sender, tokens)?;
 
-			Ok(())
-		}
+			Self::deposit_event(RawEvent::Sell(Some(sender), tokens, ret_amount));
 
-		// pub fn simple_arith(_origin) -> Result {
-		// 	runtime_io::print("Simple arithmetic function triggered!");
-		// 	Ok(())
-		// }
-
-		/// Test function to create some tokens.
-		pub fn create_tokens(origin, amount: u128) -> Result {
-			let sender = ensure_signed(origin)?;
-
-			Self::_mint(sender, amount)?;
 			Ok(())
 		}
 
@@ -162,6 +153,15 @@ decl_module! {
 			Ok(())
 		}
 
+		/// Test function to create some tokens.
+		pub fn create_tokens(origin, amount: u128) -> Result {
+			let sender = ensure_signed(origin)?;
+
+			Self::_mint(sender, amount)?;
+			Ok(())
+		}
+
+		/// Test function to clear the storage.
 		pub fn clear_storage(origin) -> Result {
 			let sender = ensure_signed(origin)?;
 
@@ -181,11 +181,16 @@ decl_event!(
 		Transfer(Option<AccountId>, Option<AccountId>, u128),
 		// Event for approval.
 		Approval(AccountId, AccountId, u128),
+		// Event for buy of tokens.
+		// <Buyer, BuyAmount, Paid>
+		Buy(Option<AccountId>, u128, u128),
+		// Event for sell of tokens.
+		// <Seller, SellAmount, Returned>
+		Sell(Option<AccountId>, u128, u128),
 	}
 );
 
 /// All functions in the decl_module macro are part of the public interface of the module.
-/// 
 impl<T: Trait> Module<T> {
 	/// Internal transfer function for ERC20 token.
 	fn _transfer(from: T::AccountId, to: T::AccountId, value: u128) -> Result {
@@ -257,28 +262,6 @@ impl<T: Trait> Module<T> {
 		Self::deposit_event(RawEvent::Transfer(Some(from), None, amount));
 		Ok(())
 	}
-
-	// fn _calc_buy_price(tokens: u128) -> ::std::result::Result<u128, &'static str> {
-	// 	let supply = Self::total_supply();
-
-	// 	let new_supply = match supply.checked_add(&tokens) {
-	// 		Some(x) => x,
-	// 		None => return Err("Overflow while calculating buy price."),
-	// 	};
-
-	// 	return Self::_integral(new_supply);
-	// }
-
-	// fn _calc_sell_price(tokens: u128) -> ::std::result::Result<u128, &'static str> {
-	// 	let supply = Self::total_supply();
-
-	// 	let new_supply = match supply.checked_sub(&tokens) {
-	// 		Some(x) => x,
-	// 		None => return Err("Underflow while calculating sell price."),
-	// 	};
-
-	// 	return Self::_integral(new_supply)
-	// }
 
 	fn _integral(to_x: u128) -> u128 {
 		let nexp = match Self::exponent().checked_add(1) {
