@@ -3,7 +3,7 @@ use parity_codec::Codec;
 use support::{decl_module, decl_storage, decl_event, ensure, StorageValue, StorageMap, Parameter, dispatch::Result};
 use {balances, system::{self, ensure_signed}};
 use runtime_primitives::traits::{CheckedSub, CheckedAdd, Member, SimpleArithmetic, As};
-use runtime_io;
+// use runtime_io;
 
 /// The module's configuration trait.
 pub trait Trait: system::Trait + balances::Trait {
@@ -16,7 +16,7 @@ pub trait Trait: system::Trait + balances::Trait {
 
 /// This module's storage items.
 decl_storage! {
-	trait Store for Module<T: Trait> as BondedFungibleToken {
+	trait Store for Module<T: Trait> as bonded_token {
 		/// Initializes this module with constructor parameters.
 		Init get(is_init): bool;
 
