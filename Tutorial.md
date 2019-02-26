@@ -284,9 +284,9 @@ them in some fashion. If we were building a smart contract with Solidity, we wou
 decl_module! {
 	/// The module declaration.
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-        // ...
+    	// ...
 
-        /// Initializes the token with constructor parameters.
+    	/// Initializes the token with constructor parameters.
 		pub fn init(_origin, exp: u128, slp: u128) -> Result {
 			ensure!(
 				!Self::is_init(),
