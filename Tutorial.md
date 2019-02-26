@@ -124,14 +124,6 @@ decl_storage! {
 		BalanceOf get(balance_of): map T::AccountId => u128;
 		// Mapping of Accounts for `Account` to Allowance
 		Allowance get(allowance): map (T::AccountId, T::AccountId) => u128;
-
-		// Exponent of the polynomial
-		Exponent get(exponent): u128;
-		// Slope of the polynomial
-		Slope get(slope): u128;
-
-		// Reserve held to incentive sells
-		Reserve get(reserve): T::Balance;
 	}
 }
 ```
@@ -225,15 +217,73 @@ Inside of the `impl` block we will place the internal `_transfer()` function so 
 	}
 ```
 
+Now we are still missing the `Transfer` and `Approval` events, and can add them to the `decl_event!` macro like so:
 
+```rust
+decl_event!(
+	pub enum Event<T> where AccountId = <T as system::Trait>::AccountId {
+		// Event for transfer of tokens.
+		Transfer(Option<AccountId>, Option<AccountId>, u128),
+		// Event for approval.
+		Approval(AccountId, AccountId, u128),
+	}
+);
+```
 
+Whew! Okay, we've finished implementing the bare bones ERC20 functionality for our token. Next up, we will add `buy()`, `sell()` and `init()` functions to turn it into a bonded token.
 
+## Adding the Bonding Curve functions
 
+Bonded Tokens must be initialized with a polynomial which dictates the price path. In this case we will use a simple polynomial of the form `y = mx^n` and define `m` as `slope` and `n` as `exponent.` We define these items in the storage macro:
 
+```rust
+decl_storage! {
+	trait Store for Module<T: Trait> as bonded_token {
+        // ...
 
+		// Exponent of the polynomial
+		Exponent get(exponent): u128;
+		// Slope of the polynomial
+		Slope get(slope): u128;
+    }
+}
+```
 
+We will also need to keep track of how much value is kept by the token as the reserve, which will get paid back to users who sell their token. We can add a `Reserve` storage item too, this will be of type `T::Balance` since it a record of how much balance is kept.
 
+```rust
+decl_storage! {
+	trait Store for Module<T: Trait> as bonded_token {
+        // ...
 
+		// Reserve held to incentive sells
+		Reserve get(reserve): T::Balance;
+    }
+}
+```
+
+This also means we must bring in and use the `balances` module. At the top of the file put a new use statement:
+
+```rust
+use balances;
+```
+
+and in the `Trait` declaration add the balances Trait
+
+```rust
+// The trait you defined before, with the added `balanced::Trait`
+pub trait Trait: system::Trait + balances::Trait {
+	// ...
+}
+```
+
+Now we will want to 
+
+## The User Interface
+
+TODO
+
+![UI]('./ss.png)
 
 
 

@@ -12,7 +12,7 @@ use support::{decl_module, decl_storage, decl_event, StorageValue, dispatch::Res
 use system::ensure_signed;
 
 /// The module's configuration trait.
-pub trait Trait: system::Trait {
+pub trait Trait: system::Trait + balances::Trait {
 	// TODO: Add other types and constants required configure this module.
 
 	/// The overarching event type.
@@ -94,12 +94,11 @@ decl_module! {
 }
 
 decl_event!(
-	/// An event in this module.
 	pub enum Event<T> where AccountId = <T as system::Trait>::AccountId {
-		// Just a dummy event.
-		// Event `Something` is declared with a parameter of the type `u32` and `AccountId`
-		// To emit this event, we call the deposit funtion, from our runtime funtions
-		SomethingStored(u32, AccountId),
+		// Event for transfer of tokens.
+		Transfer(Option<AccountId>, Option<AccountId>, u128),
+		// Event for approval.
+		Approval(AccountId, AccountId, u128),
 	}
 );
 
