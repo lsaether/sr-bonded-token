@@ -46,10 +46,7 @@ pub type BlockNumber = u64;
 /// Index of an account's extrinsic in the chain.
 pub type Nonce = u64;
 
-/// Used for the module template in `./template.rs`
-mod template;
-
-/// Bonded Fungible Token module
+/// Bonded Token module
 mod bonded_token;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -84,7 +81,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("sr-bonded-token"),
 	authoring_version: 3,
 	spec_version: 3,
-	impl_version: 0,
+	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 };
 
@@ -178,11 +175,15 @@ impl sudo::Trait for Runtime {
 	type Proposal = Call;
 }
 
-/// Used for the module bonding_curve in `./bonding-curve.rs`
+/// Used for the module bonded_token in `./bonded_token.rs`
 impl bonded_token::Trait for Runtime {
-	type TokenBalance = u128;
+	/// The ubiquitous event type.
 	type Event = Event;
+	/// The type for recording an account's token balance.
+	type TokenBalance = u128;
 }
+
+impl bonded_token
 
 construct_runtime!(
 	pub enum Runtime with Log(InternalLog: DigestItem<Hash, Ed25519AuthorityId>) where

@@ -105,7 +105,7 @@ decl_module! {
 			<balances::Module<T>>::decrease_free_balance(&sender, cost_)?;
 			<Reserve<T>>::mutate(|reserve| *reserve += cost_);
 
-			Self::_mint(sender, tokens)?;
+			Self::_mint(sender.clone(), tokens)?;
 
 			Self::deposit_event(RawEvent::Buy(Some(sender), tokens, cost));
 
@@ -131,7 +131,7 @@ decl_module! {
 			<Reserve<T>>::mutate(|reserve| *reserve -= ret_amount_);
 			<balances::Module<T>>::increase_free_balance_creating(&sender, ret_amount_);
 
-			Self::_burn(sender, tokens)?;
+			Self::_burn(sender.clone(), tokens)?;
 
 			Self::deposit_event(RawEvent::Sell(Some(sender), tokens, ret_amount));
 
