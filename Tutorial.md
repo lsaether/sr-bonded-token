@@ -277,23 +277,189 @@ pub trait Trait: system::Trait + balances::Trait {
 }
 ```
 
-Now we will want to 
+Now that we have the storage variables required, we will need to initialize
+them in some fashion. If we were building a smart contract with Solidity, we would have access to a constructor function. But in Substrate runtime land, we will need to initialize it in some other way. For this, we can replicate a constructor function by using a one-time `init()` function instead. We already hadded the `Init` storage item in an earlier step. Please add the `init()` function to the `decl_module!` macro declarations.
+
+```rust
+decl_module! {
+	/// The module declaration.
+	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+        // ...
+
+        /// Initializes the token with constructor parameters.
+		pub fn init(_origin, exp: u128, slp: u128) -> Result {
+			ensure!(
+				!Self::is_init(),
+				"Token is already initialized!"
+			);
+
+			<Exponent<T>>::put(exp);
+			<Slope<T>>::put(slp);
+
+			<Init<T>>::put(true);
+
+			Ok(())
+		}
+    }
+}
+```
+
+The logic above checks to see that the runtime module has been initialized, and if not allows us to set the exponent and slope once and changes `Init` to true.
+
+Before we implement the public facing `buy()` and `sell()` functions we will implement 3 internal helpers functions which will handle the minting of tokens, the burning of tokens, and the calculation of the integral using the polynomial parameters we've defined as exponent and slope.
+
+Inide of the `impl` block
+
+```rust
+impl<T: Trait> Module<T> {
+    // ...
+
+
+	/// Internal mint function for ERC20 token.
+	fn _mint(to: T::AccountId, amount: u128) -> Result {
+		let balance = Self::balance_of(&to);
+
+		let new_balance = match balance.checked_add(amount) {
+			Some(x) => x,
+			None => return Err("Overflow while minting new tokens."),
+		};
+
+		let supply = Self::total_supply();
+		
+		let new_supply = match supply.checked_add(amount) {
+			Some(x) => x,
+			None => return Err("Overflow while minting new tokens."),
+		};
+
+		<TotalSupply<T>>::put(new_supply);
+		<BalanceOf<T>>::insert(to.clone(), new_balance);
+
+		Self::deposit_event(RawEvent::Transfer(None, Some(to), amount));
+		Ok(())
+	}
+
+	/// Internal burn function for Erc20 token.
+	fn _burn(from: T::AccountId, amount: u128) -> Result {
+		let balance = Self::balance_of(&from);
+
+		let new_balance = match balance.checked_sub(amount) {
+			Some(x) => x,
+			None => return Err("Underflow while burning tokens."),
+		};
+
+		let supply = Self::total_supply();
+
+		let new_supply = match supply.checked_sub(amount) {
+			Some(x) => x,
+			None => return Err("Underflow while burning tokens."),
+		};
+
+		<TotalSupply<T>>::put(new_supply);
+		<BalanceOf<T>>::insert(from.clone(), new_balance);
+
+		Self::deposit_event(RawEvent::Transfer(Some(from), None, amount));
+		Ok(())
+	}
+
+	fn _integral(to_x: u128) -> u128 {
+		let nexp = match Self::exponent().checked_add(1) {
+			Some(x) => x,
+			None => return 0,
+		};
+
+		let slope = Self::slope();
+
+		match (to_x ** &nexp).checked_mul(slope).unwrap().checked_div(nexp) {
+			Some(x) => return x,
+			None => return 0,
+		}
+	}
+}
+```
+
+Finally we may now add the `buy()` and `sell()` functions.
+
+```rust
+decl_module! {
+	/// The module declaration.
+	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+        // ...
+
+		pub fn buy(origin, tokens: u128) -> Result {
+			let sender = ensure_signed(origin)?;
+
+			let supply = Self::total_supply(); 
+
+			let new_supply = match supply.checked_add(tokens) {
+				Some(x) => x,
+				None => return Err("Overflow while buying tokens."),
+			};
+
+			let integral_before = Self::_integral(supply);
+			let integral_after = Self::_integral(new_supply);
+
+			let cost = integral_after - integral_before;
+			let cost_ = <T::Balance>::sa(cost.as_());
+
+			<balances::Module<T>>::decrease_free_balance(&sender, cost_)?;
+			<Reserve<T>>::mutate(|reserve| *reserve += cost_);
+
+			Self::_mint(sender.clone(), tokens)?;
+
+			Self::deposit_event(RawEvent::Buy(Some(sender), tokens, cost));
+
+			Ok(())
+		}
+
+		pub fn sell(origin, tokens: u128) -> Result {
+			let sender = ensure_signed(origin)?;
+
+			let supply = Self::total_supply();
+
+			let new_supply = match supply.checked_sub(tokens) {
+				Some(x) => x,
+				None => return Err("Underflow while selling tokens.")
+			};
+
+			let integral_before = Self::_integral(supply);
+			let integral_after = Self::_integral(new_supply);
+
+			let ret_amount = integral_before - integral_after;
+			let ret_amount_ = <T::Balance>::sa(ret_amount.as_());
+
+			<Reserve<T>>::mutate(|reserve| *reserve -= ret_amount_);
+			<balances::Module<T>>::increase_free_balance_creating(&sender, ret_amount_);
+
+			Self::_burn(sender.clone(), tokens)?;
+
+			Self::deposit_event(RawEvent::Sell(Some(sender), tokens, ret_amount));
+
+			Ok(())
+		}
+    }
+}
+```
+
+And since we added two new even types we can add those too.
+
+```rust
+decl_event!(
+	/// An event in this module.
+	pub enum Event<T> where AccountId = <T as system::Trait>::AccountId {
+        // ...
+
+        // Event for buy of tokens.
+		// <Buyer, BuyAmount, Paid>
+		Buy(Option<AccountId>, u128, u128),
+		// Event for sell of tokens.
+		// <Seller, SellAmount, Returned>
+		Sell(Option<AccountId>, u128, u128),
+    }
+);
+```
 
 ## The User Interface
 
 TODO
 
 ![UI](./ss.png)
-
-
-
-
-
-
-
-
-
-
-
-
-

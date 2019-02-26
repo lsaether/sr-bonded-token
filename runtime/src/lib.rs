@@ -48,7 +48,6 @@ pub type Nonce = u64;
 
 /// Bonded Token module
 mod bonded_token;
-mod bonded_token2;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -184,13 +183,6 @@ impl bonded_token::Trait for Runtime {
 	type TokenBalance = u128;
 }
 
-impl bonded_token2::Trait for Runtime {
-	/// The ubiquitous event type.
-	type Event = Event;
-	/// The type for recording an account's token balance.
-	type TokenBalance = u128;
-}
-
 construct_runtime!(
 	pub enum Runtime with Log(InternalLog: DigestItem<Hash, Ed25519AuthorityId>) where
 		Block = Block,
@@ -206,7 +198,6 @@ construct_runtime!(
 		Sudo: sudo,
 		Fees: fees::{Module, Storage, Config<T>, Event<T>},
 		BondedToken: bonded_token::{Module, Call, Storage, Event<T>},
-		BondedToken2: bonded_token2::{Module, Call, Storage, Event<T>}
 	}
 );
 
