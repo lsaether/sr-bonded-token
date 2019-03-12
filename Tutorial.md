@@ -6,15 +6,15 @@ Recently, [I've been playing around with bonding curves](https://beta.convergent
 
 For those who might not be familiar with the concept, bonding curves (sometimes also referred to as automated market makers) are mechanisms for the continuous generation and destruction of crypto-economic tokens.
 
-You can think of them as a line on a chart in which the x-axis is the total supply and the y-axis is the price. As more tokens are minted or burned through buys and sells, the price will travel along this pre-determined path. Lately, they've been embraced by the community as a "better ICO" mechanism for token generation and have found use in DAOs through the idea of the continous organization.
+You can think of them as a line on a chart in which the x-axis is the total supply and the y-axis is the price. As more tokens are minted or burned through buys and sells, the price will travel along this pre-determined path. Lately, they've been embraced by the community as a "better ICO" mechanism for token generation and have found use in DAOs through the idea of the continuous organization.
 
-For the past four months I've struggled to find an optmial implementation which is robust enough to support the multifactor uses of bonding curves on Ethereum while remaining gas efficient. Due to certain constraints of the EVM, this has been _really hard_.
+For the past four months I've struggled to find an optimal implementation which is robust enough to support the multifactor uses of bonding curves on Ethereum while remaining gas efficient. Due to certain constraints of the EVM, this has been _really hard_.
 
 ## Enter Substrate
 
 Substrate is the platform for blockchain innovators. It is a library written in the Rust programming language that aims to make it simple for developers to implement custom chain logic and smart contracts which can be deployed and updated in real-time through the use of runtime modules. One of the key selling points is that it allows for native code, compiled to WebAssembly, which should solve some of the headaches associated with working inside the EVM.
 
-While there exists some great tutorials already like the [one]() from Gavin Wood at Web3 Summit and some examples of runtime modules exist on the [examples]() organization, the documentation around building on Substrate is still pretty sparse. Therefore this tutorial will be helpful to developers who might come from Ethereum development backgrounds, since that is where I come from. I will highlight some of the similiarities and differences for developing for Substrate runtimes. We will implement a bonding curve token, or `bonded token` for short.
+While there exists some great tutorials already like the [one]() from Gavin Wood at Web3 Summit and some examples of runtime modules exist on the [examples]() organization, the documentation around building on Substrate is still pretty sparse. Therefore this tutorial will be helpful to developers who might come from Ethereum development backgrounds, since that is where I come from. I will highlight some of the similarities and differences for developing for Substrate runtimes. We will implement a bonding curve token, or `bonded token` for short.
 
 ## Setting up Environment / Installing Dependencies
 
